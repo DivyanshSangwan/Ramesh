@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-# Deploy Ramesh to a remote Vultr instance via rsync and Docker Compose.
+# Deploy Ramesh to a remote Vultr instance over HTTP via rsync and Docker Compose.
 set -euo pipefail
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: ./deploy.sh <VULTR_IP> [DOMAIN]"
-    echo "Example (IP only):  ./deploy.sh 149.28.xx.xx"
-    echo "Example (HTTPS):    ./deploy.sh 149.28.xx.xx ramesh.example.com"
+    echo "Usage: ./deploy.sh <VULTR_IP>"
+    echo "Example: ./deploy.sh 149.248.50.170"
     exit 1
 fi
 
 VULTR_IP="$1"
-DOMAIN="${2:-:80}"
 
 # Load local GEMINI_API_KEY from .env if not already exported in shell.
 if [ -z "${GEMINI_API_KEY:-}" ] && [ -f .env ]; then
@@ -51,14 +49,12 @@ GEMINI_API_KEY=${GEMINI_API_KEY:-}
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_ANALYSIS_MODEL=gemini-3.5-flash-lite
 GEMINI_FALLBACK_MODEL=gemini-3.8-flash
-DOMAIN=${DOMAIN}
 ENVEOF
 chmod 600 .env
 
-# Open HTTP/HTTPS firewall ports if ufw is active
+# Open HTTP firewall port if ufw is active
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
     ufw allow 80/tcp
-    ufw allow 443/tcp
 fi
 
 # Build and start services
@@ -69,9 +65,5 @@ else
 fi
 EOF
 
-if [ "$DOMAIN" = ":80" ]; then
-    echo "==> Deployment complete! Open: http://${VULTR_IP}"
-else
-    echo "==> Deployment complete! Open: https://${DOMAIN}"
-fi
+echo "==> Deployment complete! Open: http://${VULTR_IP}"
 
