@@ -72,15 +72,7 @@ A_{\text{est}} = \sum_{\alpha \in (X,Y,Z)} \Delta A_\alpha \sum_{h \in \text{Hit
 $$
 
 #### 3. Ground-Truth Reference & Relative Error Benchmarking
-To isolate numerical ray-sampling error from mesh tessellation effects, ray-cast estimates are benchmarked against the exact polyhedral volume (via the divergence theorem / signed tetrahedron summation) and exact triangle-area sum of the validated watertight mesh:
-
-$$
-V_{\text{ref}} = \frac{1}{6} \left| \sum_{f \in \mathcal{F}} \mathbf{v}_{f,1} \cdot (\mathbf{v}_{f,2} \times \mathbf{v}_{f,3}) \right|, \qquad A_{\text{ref}} = \sum_{f \in \mathcal{F}} \frac{1}{2} \left\| (\mathbf{v}_{f,2} - \mathbf{v}_{f,1}) \times (\mathbf{v}_{f,3} - \mathbf{v}_{f,1}) \right\|
-$$
-
-$$
-\varepsilon_{\text{rel}} = 100 \times \frac{|\text{Estimate} - \text{Reference}|}{\text{Reference}}
-$$
+To isolate numerical ray-sampling error from mesh tessellation effects, ray-cast estimates are benchmarked against the exact polyhedral volume (via the divergence theorem / signed tetrahedron summation) and exact triangle-area sum of the validated watertight mesh.
 
 ### System Architecture
 
