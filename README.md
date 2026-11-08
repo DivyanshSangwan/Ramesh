@@ -9,7 +9,7 @@
 ### Key Features
 - **Dual Geometry Pipeline:**
   - **Parametric Primitives:** Instant generation of spheres, cuboids, tori, cylinders, and regular $k$-sided pyramids/cones with exact analytical closed-form ground-truth formulas.
-  - **Custom CAD Mesh Upload:** Drag-and-drop `.STL` and `.OBJ` support (up to 20 MiB) with independent non-uniform $X, Y, Z$ scale factors (`1–100`), automatic hole-filling, winding repair, and watertightness verification.
+  - **Custom CAD Mesh Upload:** Drag-and-drop `.STL` and `.OBJ` support (up to 20 MB) with independent non-uniform $X, Y, Z$ scale factors (`1–100`), automatic hole-filling, winding repair, and watertightness verification.
 - **Configurable Ray-Cast Numerical Integration:**
   - Adjustable ray grid density $N \in [8, 1024]$ ($N^2$ rays per axis, up to 1,048,576 rays per pass and 3,145,728 total rays across 3 axes).
   - Selectable primary integration axis ($X$, $Y$, or $Z$) to investigate how mesh orientation and grazing angles affect numerical convergence.
@@ -124,7 +124,7 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 
 ### Implementation Details
 - **[`backend/mesh_generator.py`](backend/mesh_generator.py):** Constructs high-resolution `trimesh.Trimesh` primitives (`sphere`, `cuboid`, `torus`, `cylinder`, `pyramid_cone`) and computes exact analytical volume and surface area using closed-form geometry equations independent of mesh tessellation.
-- **[`backend/mesh_validator.py`](backend/mesh_validator.py):** Enforces a strict 20 MiB streaming upload cap, applies non-uniform scaling matrices, fills missing faces (`trimesh.repair.fill_holes`), fixes normal/winding inversions (`trimesh.repair.fix_normals`, `fix_winding`), and rejects non-watertight or degenerate meshes before integration.
+- **[`backend/mesh_validator.py`](backend/mesh_validator.py):** Enforces a strict 20 MB streaming upload cap, applies non-uniform scaling matrices, fills missing faces (`trimesh.repair.fill_holes`), fixes normal/winding inversions (`trimesh.repair.fix_normals`, `fix_winding`), and rejects non-watertight or degenerate meshes before integration.
 - **[`backend/ray_volume.py`](backend/ray_volume.py):** Implements vectorized $N \times N$ ray grid generation with deterministic sub-cell jitter ($\pm 10^{-5}$ cell width) to avoid edge/vertex degeneracies, pairs entry/exit hits per ray for volume integration, and executes the 3-axis normal-weighted surface area estimator.
 - **[`backend/ai_analyzer.py`](backend/ai_analyzer.py):** Builds a structured JSON prompt from the benchmark telemetry, enforces a sliding-window rate limit (120 reports/hour) to protect public cloud deployments, and falls back gracefully if Gemini is disabled or unreachable.
 - **[`backend/main.py`](backend/main.py):** Exposes `/api/generate-primitive`, `/api/upload-and-analyze`, `/models/{filename}`, and `/api/health`, bounds concurrent heavy ray-casting jobs via a `BoundedSemaphore(2)`, and automatically prunes older `.stl` exports to cap disk usage.
