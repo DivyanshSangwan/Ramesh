@@ -2,7 +2,7 @@
 
 **Live Deployment:** http://149.248.50.170  
 **GitHub Repository:** https://github.com/DivyanshSangwan/Ramesh  
-**Entire AI Session Tracking:** Enabled via `.entire/settings.json` (`gh/DivyanshSangwan/Ramesh`)
+**Entire Repository:** https://entire.com/gh/DivyanshSangwan/Ramesh
 
 ---
 
@@ -19,7 +19,7 @@
   - **Parametric Primitives:** Instant generation of spheres, cuboids, tori, cylinders, and regular $k$-sided pyramids/cones with exact analytical closed-form ground-truth formulas.
   - **Custom CAD Mesh Upload:** Drag-and-drop `.STL` and `.OBJ` support (up to 20 MiB) with independent non-uniform $X, Y, Z$ scale factors (`1–100`), automatic hole-filling, winding repair, and watertightness verification.
 - **Configurable Ray-Cast Numerical Integration:**
-  - Adjustable ray grid density $N \in [8, 1024]$ ($N^2$ rays per axis, up to $1{,}048{,}576$ rays per pass and $3{,}145{,}728$ total rays across 3 axes).
+  - Adjustable ray grid density $N \in [8, 1024]$ ($N^2$ rays per axis, up to 1,048,576 rays per pass and 3,145,728 total rays across 3 axes).
   - Selectable primary integration axis ($X$, $Y$, or $Z$) to investigate how mesh orientation and grazing angles affect numerical convergence.
 - **Interactive Three.js 3D Viewport:**
   - Real-time client-side `.STL`/`.OBJ` preview and live scaling before server submission.
@@ -30,7 +30,7 @@
 ### Mathematical Formulation
 
 #### 1. Ray-Cast Volume Integration (Entry/Exit Chord Summation)
-Given an axis-aligned bounding box of cross-sectional dimensions $L_u \times L_v$ orthogonal to ray direction $\hat{d} \in \{\hat{x}, \hat{y}, \hat{z}\}$, Ramesh partitions the plane into an $N \times N$ uniform grid of cell area:
+Given an axis-aligned bounding box of cross-sectional dimensions $L_u \times L_v$ orthogonal to ray direction $\hat{d} \in (\hat{x}, \hat{y}, \hat{z})$, Ramesh partitions the plane into an $N \times N$ uniform grid of cell area:
 
 $$\Delta A = \frac{L_u \cdot L_v}{N^2}$$
 
@@ -39,18 +39,18 @@ A ray $R_{i,j}(t) = \mathbf{o}_{i,j} + t\hat{d}$ is cast through the jittered ce
 $$V_{\text{est}} = \Delta A \sum_{i=1}^{N} \sum_{j=1}^{N} \sum_{k=1}^{m_{i,j}} \left(t_{2k}^{(i,j)} - t_{2k-1}^{(i,j)}\right)$$
 
 #### 2. Three-Axis Cauchy-Crofton Surface Area Integration
-A single ray direction $\hat{d}$ cannot observe faces parallel to $\hat{d}$ ($\hat{n} \cdot \hat{d} = 0$). A surface element $dS$ with unit normal $\hat{n} = (n_x, n_y, n_z)$ projects onto the plane orthogonal to axis $\alpha \in \{x, y, z\}$ with projected area $dA_\alpha = |n_\alpha| \, dS$. Weighting each ray-surface intersection on axis $\alpha$ by its local normal component $|n_\alpha|$ integrates $n_\alpha^2 \, dS$:
+A single ray direction $\hat{d}$ cannot observe faces parallel to $\hat{d}$ ($\hat{n} \cdot \hat{d} = 0$). A surface element $dS$ with unit normal $\hat{n} = (n_x, n_y, n_z)$ projects onto the plane orthogonal to axis $\alpha \in (x, y, z)$ with projected area $dA_\alpha = |n_\alpha| \, dS$. Weighting each ray-surface intersection on axis $\alpha$ by its local normal component $|n_\alpha|$ integrates $n_\alpha^2 \, dS$:
 
 $$\int_{\partial \Omega} n_\alpha^2 \, dS \approx \Delta A_\alpha \sum_{\text{hits } h \text{ on } \alpha} |n_\alpha(h)|$$
 
 Because $\hat{n}$ is a unit normal ($n_x^2 + n_y^2 + n_z^2 = 1$), summing across all three orthogonal grids ($3N^2$ rays total) recovers the total surface area without angular bias:
 
-$$A_{\text{est}} = \sum_{\alpha \in \{x,y,z\}} \Delta A_\alpha \sum_{\text{hits } h \text{ on } \alpha} |n_\alpha(h)| \approx \int_{\partial \Omega} (n_x^2 + n_y^2 + n_z^2) \, dS = \int_{\partial \Omega} dS$$
+$$A_{\text{est}} = \sum_{\alpha \in (x,y,z)} \Delta A_\alpha \sum_{\text{hits } h \text{ on } \alpha} |n_\alpha(h)| \approx \int_{\partial \Omega} (n_x^2 + n_y^2 + n_z^2) \, dS = \int_{\partial \Omega} dS$$
 
 #### 3. Relative Error Benchmarking
 Estimated quantities are compared against analytical closed-form references (for parametric primitives) or divergence-theorem polyhedral integrals (for custom meshes):
 
-$$\varepsilon_{\%} = 100 \times \frac{|\text{Estimate} - \text{Reference}|}{\text{Reference}}$$
+$$\varepsilon_{\text{rel}} = 100 \times \frac{|\text{Estimate} - \text{Reference}|}{\text{Reference}}$$
 
 ### System Architecture
 
@@ -81,8 +81,8 @@ flowchart LR
 ## 3. Code Repository & Setup Instructions
 
 - **GitHub Repository:** [https://github.com/DivyanshSangwan/Ramesh](https://github.com/DivyanshSangwan/Ramesh)
+- **Entire Repository:** [https://entire.com/gh/DivyanshSangwan/Ramesh](https://entire.com/gh/DivyanshSangwan/Ramesh)
 - **Live Cloud Instance (Vultr):** [http://149.248.50.170](http://149.248.50.170)
-- **Entire Tracking:** Configured in `.entire/settings.json` and `.agents/hooks.json` with `Entire-Checkpoint` trailers linking commits to full AI session transcripts.
 
 ### Local Setup
 
@@ -144,5 +144,5 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 1. **BVH / GPU-Accelerated Ray Casting (Embree / WebGPU):** Integrate Intel Embree (`pyembree` / `rtree`) on the backend or WebGPU compute shaders in the browser to scale ray grid densities beyond $N = 4096$ ($>16\text{M}$ rays) in sub-second runtimes.
 2. **Adaptive Quadtree Sub-Sampling:** Dynamically subdivide grid cells near high-curvature silhouettes and thin features while keeping coarse cells on flat interior regions, achieving $O(N^2)$ accuracy with a fraction of the rays.
 3. **Multi-Material & CSG Boolean Assemblies:** Extend the workbench to multi-body CAD assemblies (`.STEP` / `.IGES` / `.3MF`) and interactive Constructive Solid Geometry (union, difference, intersection) operations.
-4. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N \in \{16, 32, 64, 128, 256, 512\}$ in parallel and plots log-log error convergence curves ($\varepsilon_{\%}$ vs. $N$).
+4. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N = 16, 32, 64, 128, 256, 512$ in parallel and plots log-log error convergence curves ($\varepsilon_{\text{rel}}$ vs. $N$).
 5. **Automated Mesh Defeaturing & Remeshing:** Offer automatic isotropic remeshing and self-intersection repair for heavily corrupted CAD scans before running volumetric integration.
