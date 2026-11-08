@@ -8,7 +8,7 @@
 
 ### Key Features
 - **Dual Geometry Pipeline:**
-  - **Parametric Primitives:** Instant generation of spheres, cuboids, tori, cylinders, and regular $k$-sided pyramids/cones with exact analytical closed-form ground-truth formulas.
+  - **Parametric Primitives:** Instant generation of spheres, cuboids, tori, cylinders, and regular $k$-sided pyramids/cones from exact geometric parameters.
   - **Custom CAD Mesh Upload:** Drag-and-drop `.STL` and `.OBJ` support (up to 20 MB) with independent non-uniform $X, Y, Z$ scale factors (`1–100`), automatic hole-filling, winding repair, and watertightness verification.
 - **Configurable Ray-Cast Numerical Integration:**
   - Adjustable ray grid density $N \in [8, 1024]$ ($N^2$ rays per axis, up to 1,048,576 rays per pass and 3,145,728 total rays across 3 axes).
@@ -22,27 +22,65 @@
 ### Mathematical Formulation
 
 #### 1. Ray-Cast Volume Integration (Entry/Exit Chord Summation)
-Given an axis-aligned bounding box of cross-sectional dimensions $L_u \times L_v$ orthogonal to ray direction $\hat{d} \in (\hat{x}, \hat{y}, \hat{z})$, Ramesh partitions the plane into an $N \times N$ uniform grid of cell area:
+Given an axis-aligned bounding box with cross-sectional dimensions $W \times H$ perpendicular to the chosen scan direction $\hat{d}$, Ramesh partitions the projection plane into an $N \times N$ uniform grid where each cell has area:
 
-$$\Delta A = \frac{L_u \cdot L_v}{N^2}$$
+$$
+\Delta A = \frac{W \cdot H}{N^2}
+$$
 
-A ray $R_{i,j}(t) = \mathbf{o}_{i,j} + t\hat{d}$ is cast through the jittered center of each grid cell $(i, j)$ to avoid degenerate silhouette/edge tangencies. Ray-triangle intersections along $R_{i,j}$ are sorted by depth $t_1 \le t_2 \le \dots \le t_{2m}$ and deduplicated within a spatial tolerance $\varepsilon$. By the Jordan Curve / parity theorem for a closed 2-manifold, consecutive pairs $(t_{2k-1}, t_{2k})$ form interior chords of length $\Delta t_k = t_{2k} - t_{2k-1}$, yielding the Riemann volume estimator:
+Through each grid cell $(i, j)$, a parallel ray is cast from just outside the bounding box:
 
-$$V_{\text{est}} = \Delta A \sum_{i=1}^{N} \sum_{j=1}^{N} \sum_{k=1}^{m_{i,j}} \left(t_{2k}^{(i,j)} - t_{2k-1}^{(i,j)}\right)$$
+$$
+\mathbf{r}_{i,j}(t) = \mathbf{o}_{i,j} + t\hat{d}
+$$
 
-#### 2. Three-Axis Cauchy-Crofton Surface Area Integration
-A single ray direction $\hat{d}$ cannot observe faces parallel to $\hat{d}$ ($\hat{n} \cdot \hat{d} = 0$). A surface element $dS$ with unit normal $\hat{n} = (n_x, n_y, n_z)$ projects onto the plane orthogonal to axis $\alpha \in (x, y, z)$ with projected area $dA_\alpha = |n_\alpha| \, dS$. Weighting each ray-surface intersection on axis $\alpha$ by its local normal component $|n_\alpha|$ integrates $n_\alpha^2 \, dS$:
+Each ray origin $\mathbf{o}$ is offset from the exact cell midpoint by a tiny deterministic sub-cell shift ($+0.00013\,\Delta u, +0.00037\,\Delta v$) to prevent rays from lying directly on symmetry planes or pyramid silhouette edges.
 
-$$\int_{\partial \Omega} n_\alpha^2 \, dS \approx \Delta A_\alpha \sum_{\text{hits } h \text{ on } \alpha} |n_\alpha(h)|$$
+All ray-triangle intersection coordinates along the scan axis are sorted in ascending order and deduplicated within a spatial tolerance $\tau$ ($10^{-7}$ of the bounding-box depth, min $10^{-8}$) so shared triangle edges and vertices are not double-counted:
 
-Because $\hat{n}$ is a unit normal ($n_x^2 + n_y^2 + n_z^2 = 1$), summing across all three orthogonal grids ($3N^2$ rays total) recovers the total surface area without angular bias:
+$$
+z_1 < z_2 < \dots < z_{2m}
+$$
 
-$$A_{\text{est}} = \sum_{\alpha \in (x,y,z)} \Delta A_\alpha \sum_{\text{hits } h \text{ on } \alpha} |n_\alpha(h)| \approx \int_{\partial \Omega} (n_x^2 + n_y^2 + n_z^2) \, dS = \int_{\partial \Omega} dS$$
+For a closed, watertight 2-manifold, the ray enters the solid on odd-indexed hits and exits on even-indexed hits. Summing the interior chord lengths across all $N \times N$ rays and multiplying by the cell area $\Delta A$ yields the Riemann volume estimator:
 
-#### 3. Relative Error Benchmarking
-Estimated quantities are compared against analytical closed-form references (for parametric primitives) or divergence-theorem polyhedral integrals (for custom meshes):
+$$
+V_{\text{est}} = \Delta A \sum_{i=1}^{N} \sum_{j=1}^{N} \sum_{k=1}^{m_{i,j}} \left(z_{2k}^{(i,j)} - z_{2k-1}^{(i,j)}\right)
+$$
 
-$$\varepsilon_{\text{rel}} = 100 \times \frac{|\text{Estimate} - \text{Reference}|}{\text{Reference}}$$
+*(If a grazing tangency produces an odd hit count on a ray, the integrator falls back to signed face-normal orientation along the scan axis—entering when the normal component is negative and exiting when positive—to resolve interior intervals.)*
+
+#### 2. Three-Axis Normal-Weighted Surface Area Integration
+A single ray direction $\hat{d}$ cannot measure faces parallel to $\hat{d}$ ($\hat{n} \cdot \hat{d} = 0$). Instead, Ramesh casts three orthogonal $N \times N$ ray grids along the $X$, $Y$, and $Z$ axes ($3N^2$ rays total).
+
+A surface patch $dS$ with unit outward normal $\hat{n}$ projects onto the plane perpendicular to axis $\alpha$ with projected area proportional to the normal magnitude. Weighting every deduplicated ray-surface hit $h$ on axis $\alpha$ by the magnitude of its local normal component integrates the squared normal component over the surface:
+
+$$
+dA_\alpha = |n_\alpha| \, dS \quad \Longrightarrow \quad \int_{\partial \Omega} n_\alpha^2 \, dS \approx \Delta A_\alpha \sum_{h \in \text{Hits}(\alpha)} |n_\alpha(h)|
+$$
+
+Because $\hat{n}$ is a unit normal vector, its squared Cartesian components sum to unity:
+
+$$
+n_x^2 + n_y^2 + n_z^2 = 1
+$$
+
+Summing the normal-weighted contributions across all three orthogonal grids reconstructs the total surface area without directional bias or division by near-zero cosines:
+
+$$
+A_{\text{est}} = \sum_{\alpha \in (X,Y,Z)} \Delta A_\alpha \sum_{h \in \text{Hits}(\alpha)} |n_\alpha(h)| \approx \int_{\partial \Omega} (n_x^2 + n_y^2 + n_z^2) \, dS = \int_{\partial \Omega} dS
+$$
+
+#### 3. Ground-Truth Reference & Relative Error Benchmarking
+To isolate numerical ray-sampling error from mesh tessellation effects, ray-cast estimates are benchmarked against the exact polyhedral volume (via the divergence theorem / signed tetrahedron summation) and exact triangle-area sum of the validated watertight mesh:
+
+$$
+V_{\text{ref}} = \frac{1}{6} \left| \sum_{f \in \mathcal{F}} \mathbf{v}_{f,1} \cdot (\mathbf{v}_{f,2} \times \mathbf{v}_{f,3}) \right|, \qquad A_{\text{ref}} = \sum_{f \in \mathcal{F}} \frac{1}{2} \left\| (\mathbf{v}_{f,2} - \mathbf{v}_{f,1}) \times (\mathbf{v}_{f,3} - \mathbf{v}_{f,1}) \right\|
+$$
+
+$$
+\varepsilon_{\text{rel}} = 100 \times \frac{|\text{Estimate} - \text{Reference}|}{\text{Reference}}
+$$
 
 ### System Architecture
 
@@ -123,9 +161,9 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 | **Infrastructure & DevOps** | Docker (multi-stage Node 22 + Python 3.12 build), Docker Compose, Vultr Cloud Compute, Entire CLI |
 
 ### Implementation Details
-- **[`backend/mesh_generator.py`](backend/mesh_generator.py):** Constructs high-resolution `trimesh.Trimesh` primitives (`sphere`, `cuboid`, `torus`, `cylinder`, `pyramid_cone`) and computes exact analytical volume and surface area using closed-form geometry equations independent of mesh tessellation.
+- **[`backend/mesh_generator.py`](backend/mesh_generator.py):** Constructs high-resolution `trimesh.Trimesh` primitives (`sphere`, `cuboid`, `torus`, `cylinder`, `pyramid_cone`) with validated dimension bounds (`10,000 cm` max) and centered bounding boxes.
 - **[`backend/mesh_validator.py`](backend/mesh_validator.py):** Enforces a strict 20 MB streaming upload cap, applies non-uniform scaling matrices, fills missing faces (`trimesh.repair.fill_holes`), fixes normal/winding inversions (`trimesh.repair.fix_normals`, `fix_winding`), and rejects non-watertight or degenerate meshes before integration.
-- **[`backend/ray_volume.py`](backend/ray_volume.py):** Implements vectorized $N \times N$ ray grid generation with deterministic sub-cell jitter ($\pm 10^{-5}$ cell width) to avoid edge/vertex degeneracies, pairs entry/exit hits per ray for volume integration, and executes the 3-axis normal-weighted surface area estimator.
+- **[`backend/ray_volume.py`](backend/ray_volume.py):** Implements vectorized $N \times N$ ray grid generation with deterministic sub-cell offsets (`+0.00013 dx`, `+0.00037 dy`) to avoid edge/vertex degeneracies, pairs entry/exit hits per ray for volume integration, and executes the 3-axis normal-weighted surface area estimator.
 - **[`backend/ai_analyzer.py`](backend/ai_analyzer.py):** Builds a structured JSON prompt from the benchmark telemetry, enforces a sliding-window rate limit (120 reports/hour) to protect public cloud deployments, and falls back gracefully if Gemini is disabled or unreachable.
 - **[`backend/main.py`](backend/main.py):** Exposes `/api/generate-primitive`, `/api/upload-and-analyze`, `/models/{filename}`, and `/api/health`, bounds concurrent heavy ray-casting jobs via a `BoundedSemaphore(2)`, and automatically prunes older `.stl` exports to cap disk usage.
 
@@ -135,4 +173,4 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 
 1. **BVH / GPU-Accelerated Ray Casting (Embree / WebGPU):** Integrate Intel Embree (`pyembree` / `rtree`) on the backend or WebGPU compute shaders in the browser to scale ray grid densities beyond $N = 4096$ ($>16\text{M}$ rays) in sub-second runtimes.
 2. **Adaptive Quadtree Sub-Sampling:** Dynamically subdivide grid cells near high-curvature silhouettes and thin features while keeping coarse cells on flat interior regions, achieving $O(N^2)$ accuracy with a fraction of the rays.
-3. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N = 16, 32, 64, 128, 256, 512$ in parallel and plots log-log error convergence curves ($\varepsilon_{\text{rel}}$ vs. $N$).
+3. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N = 16, 32, 64, 128, 256, 512$ in parallel and plots log-log error convergence curves (relative error $\varepsilon$ vs. $N$).
