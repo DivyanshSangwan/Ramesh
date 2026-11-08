@@ -1,18 +1,10 @@
 # Ramesh · Ray-Cast Mesh Benchmarking
 
-**Live Deployment:** http://149.248.50.170  
-**GitHub Repository:** https://github.com/DivyanshSangwan/Ramesh  
-**Entire Repository:** https://entire.com/gh/DivyanshSangwan/Ramesh
-
----
-
-## 1. Project Name and Description
-
 **Ramesh** (*Ray-Cast Mesh Benchmarking*) is an interactive 3D computational geometry and numerical integration workbench. It generates parametric 3D primitives or ingests custom `.STL`/`.OBJ` CAD meshes, repairs and validates mesh topology, numerically integrates **volume** and **surface area** using high-density discrete ray-casting grids, and benchmarks those numerical approximations against exact analytical/polyhedral ground-truth references—complete with real-time 3D ray visualization and AI-driven engineering diagnostics powered by Google Gemini.
 
 ---
 
-## 2. Features and Functionality
+## Features and Functionality
 
 ### Key Features
 - **Dual Geometry Pipeline:**
@@ -78,7 +70,7 @@ flowchart LR
 
 ---
 
-## 3. Code Repository & Setup Instructions
+## Code Repository & Setup Instructions
 
 - **GitHub Repository:** [https://github.com/DivyanshSangwan/Ramesh](https://github.com/DivyanshSangwan/Ramesh)
 - **Entire Repository:** [https://entire.com/gh/DivyanshSangwan/Ramesh](https://entire.com/gh/DivyanshSangwan/Ramesh)
@@ -90,28 +82,28 @@ flowchart LR
 git clone https://github.com/DivyanshSangwan/Ramesh.git
 cd Ramesh
 
-# 1. Python Backend Environment
+# Python Backend Environment
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt -c constraints.txt
 
-# 2. Build React/Three.js Frontend
+# Build React/Three.js Frontend
 cd frontend
 npm ci
 npm run build
 cd ..
 
-# 3. Configure Environment (Optional for AI Reports)
+# Configure Environment (Optional for AI Reports)
 cp .env.example .env
 # Edit .env and set GEMINI_API_KEY=your_api_key
 
-# 4. Run Server
+# Run Server
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 
 Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:8000/docs** for the interactive OpenAPI documentation.
 
-### One-Command Cloud Deployment (Docker + Vultr)
+### Cloud Deployment (Docker + Vultr)
 
 ```bash
 ./deploy.sh <SERVER_IP>
@@ -119,7 +111,7 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 
 ---
 
-## 4. Technical Documentation
+## Technical Documentation
 
 ### Tech Stack
 | Layer | Technologies Used |
@@ -139,10 +131,8 @@ Open **http://127.0.0.1:8000** for the full application or **http://127.0.0.1:80
 
 ---
 
-## 5. Future Scope and Improvements
+## Future Scope and Improvements
 
 1. **BVH / GPU-Accelerated Ray Casting (Embree / WebGPU):** Integrate Intel Embree (`pyembree` / `rtree`) on the backend or WebGPU compute shaders in the browser to scale ray grid densities beyond $N = 4096$ ($>16\text{M}$ rays) in sub-second runtimes.
 2. **Adaptive Quadtree Sub-Sampling:** Dynamically subdivide grid cells near high-curvature silhouettes and thin features while keeping coarse cells on flat interior regions, achieving $O(N^2)$ accuracy with a fraction of the rays.
-3. **Multi-Material & CSG Boolean Assemblies:** Extend the workbench to multi-body CAD assemblies (`.STEP` / `.IGES` / `.3MF`) and interactive Constructive Solid Geometry (union, difference, intersection) operations.
-4. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N = 16, 32, 64, 128, 256, 512$ in parallel and plots log-log error convergence curves ($\varepsilon_{\text{rel}}$ vs. $N$).
-5. **Automated Mesh Defeaturing & Remeshing:** Offer automatic isotropic remeshing and self-intersection repair for heavily corrupted CAD scans before running volumetric integration.
+3. **Convergence Plotting & Multi-N Sweeps:** Add an automated convergence sweep mode that runs $N = 16, 32, 64, 128, 256, 512$ in parallel and plots log-log error convergence curves ($\varepsilon_{\text{rel}}$ vs. $N$).
