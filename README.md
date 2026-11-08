@@ -50,7 +50,7 @@ $$
 
 *(If a grazing tangency produces an odd hit count on a ray, the integrator falls back to signed face-normal orientation along the scan axis—entering when the normal component is negative and exiting when positive—to resolve interior intervals.)*
 
-#### 2. Three-Axis Normal-Weighted Surface Area Integration
+#### 2. Three-Axis Normal-Weighted Surface Area Integration (Cauchy-Crofton Formula)
 A single ray direction $\hat{d}$ cannot measure faces parallel to $\hat{d}$ ($\hat{n} \cdot \hat{d} = 0$). Instead, Ramesh casts three orthogonal $N \times N$ ray grids along the $X$, $Y$, and $Z$ axes ($3N^2$ rays total).
 
 A surface patch $dS$ with unit outward normal $\hat{n}$ projects onto the plane perpendicular to axis $\alpha$ with projected area proportional to the normal magnitude. Weighting every deduplicated ray-surface hit $h$ on axis $\alpha$ by the magnitude of its local normal component integrates the squared normal component over the surface:
