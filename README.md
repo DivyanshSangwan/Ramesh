@@ -77,25 +77,22 @@ To isolate numerical ray-sampling error from mesh tessellation effects, ray-cast
 ### System Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Client["React 19 + Three.js Frontend"]
-        UI["Control Sidebar\n(Primitives / Upload / N / Axis)"]
-        VP["3D WebGL Viewport\n(Mesh + Animated Ray Sweep)"]
-        TEL["Telemetry & AI Report Cards"]
-    end
+flowchart TD
+    UI["React 19 Control Sidebar (Primitives, STL/OBJ Upload, N, Axis)"]
+    GEN["mesh_generator.py (Parametric Primitives)"]
+    VAL["mesh_validator.py (Mesh Scaling, Hole Repair & Watertight Check)"]
+    RAY["ray_volume.py (N² Volume & 3N² Surface Area Ray Integrator)"]
+    AI["ai_analyzer.py (Gemini Engineering Telemetry Interpreter)"]
+    VP["Three.js 3D Viewport (STL Mesh & Animated Ray-Sweep Overlay)"]
+    TEL["Benchmark Telemetry & AI Diagnostic Cards"]
 
-    subgraph Server["FastAPI + Trimesh Backend"]
-        GEN["mesh_generator.py\n(Parametric Primitives)"]
-        VAL["mesh_validator.py\n(Repair & Watertight Check)"]
-        RAY["ray_volume.py\n(N² Volume & 3N² Area Integrator)"]
-        AI["ai_analyzer.py\n(Gemini Telemetry Interpreter)"]
-    end
-
-    UI -->|POST /api/generate-primitive\nPOST /api/upload-and-analyze| GEN & VAL
+    UI -->|"/api/generate-primitive"| GEN
+    UI -->|"/api/upload-and-analyze"| VAL
     GEN --> VAL
     VAL --> RAY
     RAY --> AI
-    RAY & AI -->|JSON Telemetry + STL Asset| VP & TEL
+    RAY -->|"Validated STL + Ray Hits"| VP
+    AI -->|"JSON Telemetry + AI Report"| TEL
 ```
 
 ---
