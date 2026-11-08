@@ -24,11 +24,7 @@
 Before running ray-cast integration, every uploaded `.STL` or `.OBJ` mesh must form a closed, watertight 2-manifold so that every ray entering the solid is guaranteed to exit it. Ramesh automatically detects and repairs missing faces through a four-stage topological pipeline:
 
 1. **Boundary Edge Detection (The 2-Triangle Rule):** In a watertight 2-manifold mesh, every interior edge is shared by exactly two adjacent triangles. After welding coincident vertices, the validator scans the mesh adjacency graph and flags any edge attached to only a single triangle as an open **boundary edge**.
-2. **Boundary Loop Tracing (Finding the Rim):** Rather than connecting open edges to arbitrary nearby edges in 3D space—which would pinch unrelated surfaces together or create non-manifold fins—the repair engine chains connected boundary edges tip-to-tail to isolate each closed **boundary loop** representing the exact perimeter of a hole:
-
-$$
-V_1 \longrightarrow V_2 \longrightarrow \dots \longrightarrow V_k \longrightarrow V_1
-$$
+2. **Boundary Loop Tracing (Finding the Rim):** The repair engine chains connected boundary edges tip-to-tail to isolate each closed **boundary loop** representing the exact perimeter of a hole:
 3. **Hole Triangulation (Sealing the Loop):** Each boundary loop is capped with new triangles using one of two methods depending on loop geometry:
    - **Planar Ear Clipping / Polygon Triangulation:** For flat or small boundary rings, the algorithm iteratively clips three consecutive rim vertices into a new triangle, removing the middle vertex and shrinking the loop until the entire opening is tiled.
    - **Best-Fit Plane Projection:** For warped or non-planar 3D holes, the rim vertices are projected onto their least-squares best-fit 2D plane, triangulated via constrained 2D polygon triangulation, and mapped back to their original 3D vertex coordinates.
