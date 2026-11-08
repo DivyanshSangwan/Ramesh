@@ -1,0 +1,4 @@
+{$DOMAIN} {
+    reverse_proxy ramesh:8000
+}
+

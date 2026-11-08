@@ -1,0 +1,14 @@
+.env
+.env.*
+.venv
+.git
+.aws
+.codex
+.agents
+**/node_modules
+**/dist
+**/__pycache__
+**/test-results
+**/playwright-report
+generated_models
+tests
