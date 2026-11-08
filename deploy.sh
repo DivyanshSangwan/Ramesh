@@ -57,11 +57,13 @@ if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
     ufw allow 80/tcp
 fi
 
-# Build and start services
+# Build and start services (remove any orphaned containers like old caddy)
 if docker compose version >/dev/null 2>&1; then
-    docker compose up -d --build
+    docker compose down --remove-orphans
+    docker compose up -d --build --remove-orphans
 else
-    docker-compose up -d --build
+    docker-compose down --remove-orphans
+    docker-compose up -d --build --remove-orphans
 fi
 EOF
 
